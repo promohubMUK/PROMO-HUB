@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Promo Hub | Official Brand Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --primary-blue: #071f3e;   
+  --secondary-blue: #232f3e; 
+  --amazon-orange: #ff9900;  
+  --button-yellow: #ffd814;  
+  --price-red: #b12704;
+  --bg-light: #f4f4f4;
+}
+
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg-light); color: #333; line-height: 1.6; }
+
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+header { background: var(--primary-blue); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.menu { background: var(--secondary-blue); color: white; padding: 10px 5%; display: flex; gap: 20px; position: sticky; top: 0; z-index: 100; overflow-x: auto; }
+.menu span { cursor: pointer; font-size: 14px; white-space: nowrap; padding: 6px 12px; border-radius: 4px; transition: 0.3s; }
+.menu span:hover { background: rgba(255,255,255,0.1); color: var(--amazon-orange); }
+
+.section { display: none; padding: 40px 5%; animation: fadeInUp 0.5s ease-out; }
+.container-box { background: white; padding: 35px; margin: 0 auto; max-width: 800px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+
+.hero-banner { background: var(--amazon-orange); color: white; text-align: center; padding: 50px 20px; margin-bottom: 30px; border-radius: 12px; }
+
+.search-container { max-width: 600px; margin: -20px auto 30px auto; display: flex; gap: 10px; }
+.search-input { flex: 1; padding: 12px; border: 2px solid var(--amazon-orange); border-radius: 30px; outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+.ad-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: 0.3s; position: relative; cursor: pointer; }
+.ad-card:hover { transform: scale(1.02); }
+.ad-card img, .ad-card video { width: 100%; height: 200px; object-fit: cover; background: #000; }
+
+input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+button { background: var(--button-yellow); color: black; border: 1px solid #a88734; padding: 14px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 10px; transition: 0.2s; }
+button:hover { background: #f7ca00; transform: translateY(-1px); }
+
+/* Modals */
+.modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; padding: 20px; box-sizing: border-box; }
+.modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;}
+
+/* Multi-image preview */
+.image-gallery { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }
+.image-gallery img { height: 150px; border-radius: 8px; flex-shrink: 0; }
+
+.edit-btn { background: var(--primary-blue) !important; color: white !important; width: auto !important; padding: 5px 12px !important; font-size: 11px !important; border: none !important; margin: 0 !important; }
+.del-btn { background: #d9534f !important; color: white !important; width: auto !important; padding: 5px 12px !important; font-size: 11px !important; border: none !important; margin: 0 !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 style="color:var(--amazon-orange); margin:0; font-size: 26px;">Promo Hub</h1>
+  <div id="auth-display" style="color:white; font-size:13px; font-weight: bold;">Guest Mode</div>
+</header>
+
+<div class="menu">
+  <span onclick="showSection('home')"> Home</span>
+  <span onclick="showSection('about')"> About Us</span>
+  <span id="nav-profile" onclick="showSection('profile')" style="display:none;"> My Profile</span>
+  <span id="nav-login" onclick="showSection('login')"> Login</span>
+  <span id="nav-signup" onclick="showSection('signup')"> Sign Up</span>
+  <span onclick="checkAuthAndShow('placeAd')" style="background:var(--amazon-orange); color:white; font-weight:bold;"> Post Ad</span>
+  <span id="nav-logout" onclick="logout()" style="display:none; color: #ff6666;">Logout</span>
+</div>
+
+<div id="home" class="section" style="display:block;">
+  <div class="hero-banner">
+    <h2 style="margin:0; font-size: 32px;">Where your brands come to life</h2>
+    <p>Connect with the right audience on PromoHub.</p>
+  </div>
+  <div class="search-container">
+    <input type="text" id="searchInput" class="search-input" placeholder="Search brands, products, or locations..." onkeyup="filterAds()">
+  </div>
+  <div id="ads-container" class="grid"></div>
+</div>
+
+<div id="detailModal" class="modal-overlay" onclick="if(event.target == this) closeDetailModal()">
+  <div class="modal-content">
+    <button onclick="closeDetailModal()" style="width: auto; position: absolute; right: 10px; top: 0; background: none; border: none; font-size: 24px;">&times;</button>
+    <div id="detailGallery" class="image-gallery"></div>
+    <h2 id="detailTitle" style="margin-bottom: 5px;"></h2>
+    <p id="detailPrice" style="color: var(--price-red); font-size: 20px; font-weight: bold; margin-top: 0;"></p>
+    <hr>
+    <p id="detailDesc"></p>
+    <p><b>📍 Location:</b> <span id="detailLoc"></span></p>
+    <p><b>📞 Contact:</b> <span id="detailPhone"></span></p>
+    <button onclick="closeDetailModal()">Close</button>
+  </div>
+</div>
+
+<div id="about" class="section">
+  <div class="container-box">
+    <h2>About PromoHub</h2>
+    <p>PromoHub is a dynamic digital advertising platform designed to help businesses promote their products and services with ease.</p>
+    <div class="value-card"><b>Innovation:</b> We embrace new ideas and creative solutions</div>
+    <div class="value-card"><b>Simplicity:</b> We make advertising easy to use</div>
+    <h3>Official Team | CONTACT: promohub256@gmail.com</h3>
+    <table style="width:100%; border-collapse:collapse; margin-top:15px; background:#fafafa;">
+      <thead style="background:var(--primary-blue); color:white;">
+        <tr><th style="padding:12px;">Full Name</th><th>Student ID</th><th>Reg No.</th></tr>
+      </thead>
+      <tbody id="team-body" style="text-align:center;"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="profile" class="section">
+  <div class="container-box" style="max-width:600px;">
+    <div style="text-align:center;">
+      <img id="p-img" src="https://via.placeholder.com/130" class="p-pic">
+      <h2 id="p-fullname">Loading...</h2>
+      <p id="p-username" style="color:#888;"></p>
+    </div>
+    <form id="profileForm">
+      <input type="text" id="edit-n" placeholder="Update Name">
+      <input type="date" id="edit-d">
+      <input type="file" id="edit-p" accept="image/*">
+      <button type="submit">Update Account</button>
+    </form>
+    <h3>My Advertisements</h3>
+    <div id="my-ads-list"></div>
+  </div>
+</div>
+
+<div id="placeAd" class="section">
+  <div class="container-box" style="max-width:550px;">
+    <h2 id="form-title">Launch New Ad</h2>
+    <form id="adForm">
+      <input type="hidden" id="ad-id">
+      <input id="title" placeholder="Product Name" required>
+      <input id="price" placeholder="Price (e.g. 50,000 UGX)" required>
+      <textarea id="desc" placeholder="Product Details..." rows="4" required></textarea>
+      
+      <label style="font-size: 12px; font-weight: bold;">Ad Duration & Tier:</label>
+      <select id="expiryDays" onchange="updatePaymentAmount()">
+        <option value="1" data-cost="5000">24 Hour Flash Ad (5,000 UGX)</option>
+        <option value="7" data-cost="20000" selected>7 Days Standard (20,000 UGX)</option>
+        <option value="30" data-cost="50000">30 Days Pro (50,000 UGX)</option>
+      </select>
+
+      <input id="loc" placeholder="Location" required>
+      <input id="phone" placeholder="Phone Number" required>
+      
+      <div style="margin: 10px 0; border: 1px dashed #ccc; padding: 10px; border-radius: 6px;">
+        <label style="font-size: 12px; display: block; margin-bottom: 5px;">Upload Media (Select Multiple Images):</label>
+        <input type="file" id="media-input" accept="image/*" multiple>
+      </div>
+
+      <button type="button" onclick="openPaymentModal()" id="pay-trigger-btn">Proceed to Payment</button>
+      <button type="submit" id="submit-ad-btn" style="display:none;">Publish Ad</button>
+    </form>
+  </div>
+</div>
+
+<div id="paymentModal" class="modal-overlay">
+  <div class="container-box" style="max-width:400px; text-align:center;">
+    <h2 style="color:var(--primary-blue)">Secure Checkout</h2>
+    <p>Total Amount: <span id="pay-amount" style="font-weight:bold; color:var(--price-red);">20,000 UGX</span></p>
+    <div style="text-align:left; margin-bottom:20px;">
+      <label style="font-size:12px;">Payment Method:</label>
+      <select id="payMethod">
+        <option>MTN Mobile Money</option>
+        <option>Airtel Money</option>
+        <option>Visa / Mastercard</option>
+      </select>
+      <input type="text" placeholder="Phone Number / Card Details" required>
+    </div>
+    <button onclick="processPayment()" id="confirm-pay-btn" style="background:#4CAF50; color:white; border:none;">Confirm & Pay Now</button>
+    <button onclick="closePaymentModal()" style="background:#eee; color:#333; border:none; margin-top:5px; font-size:12px;">Cancel</button>
+  </div>
+</div>
+
+<div id="login" class="section"><div class="container-box" style="max-width:400px;"><h2>Login</h2><input id="lU" placeholder="Username"><input id="lP" type="password" placeholder="Password"><button onclick="handleLogin()">Sign In</button></div></div>
+<div id="signup" class="section"><div class="container-box" style="max-width:400px;"><h2>Register</h2><input id="sN" placeholder="Full Name"><input id="sU" placeholder="Choose Username"><input id="sP" type="password" placeholder="Password"><button onclick="handleSignup()">Create Account</button></div></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, push, onValue, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA8x2xjPJ6JV93RLEXyIF0OXVMLVKfYfQw",
+    authDomain: "promo-hub-fb31f.firebaseapp.com",
+    projectId: "promo-hub-fb31f",
+    storageBucket: "promo-hub-fb31f.firebasestorage.app",
+    messagingSenderId: "86914018082",
+    appId: "1:86914018082:web:d197f7d7174e0bed6e937b",
+    databaseURL: "https://promo-hub-fb31f-default-rtdb.firebaseio.com"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  let allAds = [];
+
+  // AUTH
+  window.handleSignup = async () => {
+    const u = document.getElementById("sU").value.toLowerCase().trim();
+    const n = document.getElementById("sN").value.trim();
+    const p = document.getElementById("sP").value;
+    if(!u || !n || !p) return alert("Fill all fields");
+    await set(ref(db, 'users/' + u), { fullName: n, password: p, profilePic: "", dob: "" });
+    alert("Success! Please Login."); showSection('login');
+  };
+
+  window.handleLogin = async () => {
+    const u = document.getElementById("lU").value.toLowerCase().trim();
+    const p = document.getElementById("lP").value;
+    const snap = await get(child(ref(db), `users/${u}`));
+    if(snap.exists() && snap.val().password === p) {
+      localStorage.setItem("loggedIn", "true");
+      localStorage.setItem("username", u);
+      localStorage.setItem("fullName", snap.val().fullName);
+      location.reload();
+    } else alert("Invalid username or password");
+  };
+
+  // POST CLICK & DETAIL MODAL
+  window.openAdDetails = (key) => {
+    const ad = allAds.find(item => item[0] === key)[1];
+    document.getElementById("detailTitle").innerText = ad.title;
+    document.getElementById("detailPrice").innerText = ad.price;
+    document.getElementById("detailDesc").innerText = ad.desc;
+    document.getElementById("detailLoc").innerText = ad.loc;
+    document.getElementById("detailPhone").innerText = ad.phone;
+    
+    const gallery = document.getElementById("detailGallery");
+    gallery.innerHTML = "";
+    if(ad.images && ad.images.length > 0) {
+        ad.images.forEach(src => {
+            gallery.innerHTML += `<img src="${src}">`;
+        });
+    } else if(ad.img) {
+        gallery.innerHTML = `<img src="${ad.img}">`;
+    }
+    
+    document.getElementById("detailModal").style.display = "flex";
+  };
+
+  window.closeDetailModal = () => { document.getElementById("detailModal").style.display = "none"; };
+
+  // MULTI IMAGE LOGIC
+  const readFiles = (files) => {
+    return Promise.all([...files].map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    }));
+  };
+
+  // AD RENDERING
+  onValue(ref(db, 'ads'), (snap) => {
+    allAds = snap.val() ? Object.entries(snap.val()) : [];
+    renderAds(allAds);
+  });
+
+  function renderAds(adsArray) {
+    const mainCont = document.getElementById("ads-container");
+    const myCont = document.getElementById("my-ads-list");
+    const currentUser = localStorage.getItem("username");
+    mainCont.innerHTML = ""; 
+    if(myCont) myCont.innerHTML = "";
+    
+    const now = new Date().getTime();
+    
+    [...adsArray].reverse().forEach(([key, ad]) => {
+      if (now < ad.expiresAt) {
+        const isOwner = ad.owner === currentUser;
+        // Display first image or placeholder
+        const coverImg = (ad.images && ad.images[0]) ? ad.images[0] : (ad.img || 'https://via.placeholder.com/300?text=No+Image');
+        
+        mainCont.innerHTML += `
+          <div class="ad-card" onclick="window.openAdDetails('${key}')">
+            <img src="${coverImg}">
+            <div style="padding:15px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                 <span style="color:#2ecc71; font-size:10px; font-weight:bold;">⏳ LIVE</span>
+                 ${isOwner ? `<button class="edit-btn" onclick="event.stopPropagation(); window.startEdit('${key}')">Edit</button>` : ""}
+              </div>
+              <h3 style="margin:5px 0;">${ad.title}</h3>
+              <p style="color:var(--price-red); font-weight:bold; margin:5px 0;">${ad.price}</p>
+              <p style="font-size:12px; color:#555;">${ad.loc}</p>
+            </div>
+          </div>`;
+
+        if(isOwner && myCont) {
+          myCont.innerHTML += `<div style="background:#eee; padding:10px; border-radius:8px; margin-bottom:5px; display:flex; justify-content:space-between;">
+            <b>${ad.title}</b> <span><button class="edit-btn" onclick="window.startEdit('${key}')">Edit</button> <button class="del-btn" onclick="window.delAd('${key}')">X</button></span>
+          </div>`;
+        }
+      }
+    });
+  }
+
+  // FORM SUBMISSION
+  document.getElementById('adForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const adId = document.getElementById("ad-id").value;
+    const files = document.getElementById("media-input").files;
+    const exp = new Date().getTime() + (parseInt(document.getElementById("expiryDays").value) * 86400000);
+
+    let imagesArray = [];
+    if(files.length > 0) {
+      imagesArray = await readFiles(files);
+    }
+
+    const adObj = {
+      title: document.getElementById("title").value,
+      price: document.getElementById("price").value,
+      desc: document.getElementById("desc").value,
+      loc: document.getElementById("loc").value,
+      phone: document.getElementById("phone").value,
+      owner: localStorage.getItem("username"),
+      expiresAt: exp,
+      images: imagesArray
+    };
+
+    if(adId) update(ref(db, 'ads/'+adId), adObj).then(()=>location.reload());
+    else push(ref(db, 'ads'), adObj).then(()=>location.reload());
+  });
+
+  // Global functions
+  window.updatePaymentAmount = () => {
+    const select = document.getElementById("expiryDays");
+    const cost = select.options[select.selectedIndex].getAttribute('data-cost');
+    document.getElementById("pay-amount").innerText = parseInt(cost).toLocaleString() + " UGX";
+  };
+  window.openPaymentModal = () => {
+    if(!document.getElementById('adForm').checkValidity()) return alert("Fill in ad details first!");
+    document.getElementById('paymentModal').style.display = 'flex';
+  };
+  window.closePaymentModal = () => { document.getElementById('paymentModal').style.display = 'none'; };
+  window.processPayment = () => {
+    document.getElementById("confirm-pay-btn").innerText = "Verifying...";
+    setTimeout(() => {
+        alert("Payment Received!");
+        closePaymentModal();
+        document.getElementById('submit-ad-btn').click();
+    }, 1500);
+  };
+  window.startEdit = async (id) => {
+    const snap = await get(child(ref(db), `ads/${id}`));
+    if(snap.exists()){
+      const ad = snap.val();
+      document.getElementById("ad-id").value = id;
+      document.getElementById("title").value = ad.title;
+      document.getElementById("price").value = ad.price;
+      document.getElementById("desc").value = ad.desc;
+      document.getElementById("loc").value = ad.loc;
+      document.getElementById("phone").value = ad.phone;
+      showSection('placeAd');
+    }
+  };
+  window.delAd = (id) => { if(confirm("Delete?")) remove(ref(db, 'ads/' + id)); };
+  window.filterAds = () => {
+    const t = document.getElementById("searchInput").value.toLowerCase();
+    renderAds(allAds.filter(([id, ad]) => ad.title.toLowerCase().includes(t) || ad.loc.toLowerCase().includes(t)));
+  };
+  window.showSection = (id) => {
+    document.querySelectorAll(".section").forEach(s => s.style.display = "none");
+    document.getElementById(id).style.display = "block";
+    if(id === 'profile') window.loadUserProfile();
+    if(id === 'about') window.loadTeam();
+  };
+  window.checkAuthAndShow = (id) => {
+    if(localStorage.getItem("loggedIn") !== "true") { alert("Login First"); showSection('login'); }
+    else { document.getElementById("adForm").reset(); document.getElementById("ad-id").value = ""; showSection(id); }
+  };
+  window.loadUserProfile = async () => {
+    const u = localStorage.getItem("username");
+    const snap = await get(child(ref(db), `users/${u}`));
+    if(snap.exists()){
+      const d = snap.val();
+      document.getElementById("p-fullname").innerText = d.fullName;
+      document.getElementById("p-username").innerText = "@" + u;
+      if(d.profilePic) document.getElementById("p-img").src = d.profilePic;
+    }
+  };
+  window.loadTeam = () => {
+    const team = [{n:"MULINDWA MARK", i:"2500703908", r:"25/U/03908/PS"}, {n:"NAKIGANDA IRENE", i:"2500703974", r:"25/U/03974/PS"}, {n:"NAMULI JULIET MIREMBE", i:"2500704002", r:"25/U/04002/PS"}, {n:"NALUBWAMA JULIANA", i:"2500700371", r:"25/U/0371"}, {n:"KAYANJA SOLOMON", i:"2500703791", r:"25/U/03791/PS"}, {n:"MUKISA MOSES", i:"2500703905", r:"25/U/03905/PS"}];
+    document.getElementById("team-body").innerHTML = team.map(m => `<tr><td><b>${m.n}</b></td><td>${m.i}</td><td>${m.r}</td></tr>`).join('');
+  };
+  window.logout = () => { localStorage.clear(); location.reload(); };
+
+  window.onload = () => {
+    if(localStorage.getItem("loggedIn") === "true") {
+      document.getElementById("auth-display").innerText = "👤 " + localStorage.getItem("fullName");
+      document.getElementById("nav-login").style.display = "none";
+      document.getElementById("nav-signup").style.display = "none";
+      document.getElementById("nav-profile").style.display = "block";
+      document.getElementById("nav-logout").style.display = "block";
+    }
+  };
+</script>
+</body>
+</html>
